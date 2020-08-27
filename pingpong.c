@@ -25,38 +25,36 @@ void pingpong()
     pipe(pipe_from_child);
     if (fork() == 0) // child
     {
-        char message[] = "0: received pong\n";
-        char char_pid = getpid() + '0';
+        char message[] = "0";
+        int pid = getpid();
 
         // 읽기 부분
         close(pipe_from_parent[1]);
         read(pipe_from_parent[0], buf, sizeof(buf));
-        printf(1, buf);
+        printf(1, "%d: received ping\n", buf[0]);
         close(pipe_from_parent[0]);
 
         // 쓰기 부분
         close(pipe_from_child[0]);
-        // 해당 방법은 앞의 자리 수가 일의 자리인 경우만 해당
-        memset(message, char_pid, sizeof(char));
+        memset(message, pid, sizeof(char));
         write(pipe_from_child[1], message, sizeof(message));
         close(pipe_from_child[1]);
     }
     else // parent
     {
-        char message[] = "0: received ping\n";
-        char char_pid = getpid() + '0';
+        char message[] = "0";
+        int pid = getpid();
 
         // 쓰기 부분
         close(pipe_from_parent[0]);
-        // 해당 방법은 앞의 자리 수가 일의 자리인 경우만 해당
-        memset(message, char_pid, sizeof(char));
+        memset(message, pid, sizeof(char));
         write(pipe_from_parent[1], message, sizeof(message));
         close(pipe_from_parent[1]);
 
         // 읽기 부분
         close(pipe_from_child[1]);
         read(pipe_from_child[0], buf, sizeof(buf));
-        printf(1, buf);
+        printf(1, "%d: received pong\n", buf[0]);
         close(pipe_from_child[0]);
 
         wait(); // 1. wait으로 해결하는 것이 현명?
