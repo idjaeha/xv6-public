@@ -2,7 +2,7 @@
 #include "user.h"
 #define MAX_NUM 3
 
-// 파이프라인 구현에 대해서 모르겠다!
+// 파이프라인 구현에 대해서 모르겠다! -> pipe의 원리가 뭐지..?
 // 왜 탈출을 못할까요... ㅠㅠ
 // 소수는 왜 제대로 안찍힐까요...
 
@@ -36,15 +36,6 @@ void primes()
 
             while (number < MAX_NUM && read(_pipe[0], &number, sizeof(number)) != 0)
             {
-                if (fork() == 0)
-                {
-                    break;
-                }
-                else
-                {
-                    write(_pipe[1], &number, sizeof(number));
-                }
-
                 if (number % prime != 0) // 소수일시 보낸다.
                 {
                     if (fork() == 0)
