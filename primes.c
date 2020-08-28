@@ -2,10 +2,6 @@
 #include "user.h"
 #define MAX_NUM 35
 
-// 문제점
-// 1. 파이프 라인이 잘 작동하고 있는지 사실 모르겠다.
-// 2. read를 탈출 못한다.
-
 void primes()
 {
     int current_pipe[2];
@@ -30,22 +26,17 @@ void primes()
         int no_child = 1;
         int new_pipe[2];
 
-        while (number < MAX_NUM && prime < MAX_NUM)
+        while (1) // break 했을 때, 처음으로 돌리게 하기 위한 장치
         {
-            // close(current_pipe[1]);
+            close(current_pipe[1]);
             if (read(current_pipe[0], &prime, sizeof(prime)) == 0)
             {
                 break;
             }
             printf(1, "prime %d\n", prime);
 
-            while (number < MAX_NUM)
+            while (read(current_pipe[0], &number, sizeof(number)) != 0)
             {
-                if (read(current_pipe[0], &number, sizeof(number)) == 0)
-                {
-                    break;
-                }
-
                 if (number % prime != 0)
                 {
                     if (no_child) // 자식 프로세스가 없다면 생성한다.
@@ -53,7 +44,8 @@ void primes()
                         pipe(new_pipe);
                         if (fork() == 0) // child
                         {
-                            current_pipe[0] = new_pipe[0]; // 자식의 읽기 파이프를 새로운 파이프와 연결한다.
+                            current_pipe[0] = new_pipe[0]; // 자식의 파이프를 새로운 파이프와 교체한다.
+                            current_pipe[1] = new_pipe[1]; // 자식의 파이프를 새로운 파이프와 교체한다.
                             break;
                         }
                         else // parent
@@ -64,22 +56,32 @@ void primes()
                     }
                     write(current_pipe[1], &number, sizeof(number)); // 자식 프로세스에게 넘긴다.
                 }
+
+                if (number == MAX_NUM) // MAX_NUM 과 같다면 모든 숫자를 다 쓴 것이기 때문에 쓰기 파이프를 닫는다.
+                {
+                    close(current_pipe[1]);
+                }
             }
         }
+        close(current_pipe[0]);
 
-        // 좀비를 안만들기위한 임시방편 대신 꺼지질 않는다 ㅠ
         if (no_child == 0)
         {
             wait();
         }
-        close(current_pipe[0]);
-        close(current_pipe[1]);
         exit();
     }
 }
 
 int main(int argc, char *argv[])
 {
-    primes();
+    if (argc <= 1)
+    {
+        primes();
+    }
+    else
+    {
+        printf(1, "Can't use parameter!!!\n");
+    }
     exit();
 }
