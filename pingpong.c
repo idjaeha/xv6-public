@@ -1,5 +1,4 @@
 #include "types.h"
-#include "stat.h"
 #include "user.h"
 
 // pingpong에 관한 궁금증
@@ -25,36 +24,34 @@ void pingpong()
     pipe(pipe_from_child);
     if (fork() == 0) // child
     {
-        char message[] = "0";
-        int pid = getpid();
+        int pid = 0;
 
         // 읽기 부분
         close(pipe_from_parent[1]);
-        read(pipe_from_parent[0], buf, sizeof(buf));
-        printf(1, "%d: received ping\n", buf[0]);
+        read(pipe_from_parent[0], &pid, sizeof(pid));
+        printf(1, "%d: received ping\n", pid);
         close(pipe_from_parent[0]);
 
         // 쓰기 부분
+        pid = getpid();
         close(pipe_from_child[0]);
-        memset(message, pid, sizeof(char));
-        write(pipe_from_child[1], message, sizeof(message));
+        write(pipe_from_child[1], &pid, sizeof(pid));
         close(pipe_from_child[1]);
     }
     else // parent
     {
-        char message[] = "0";
-        int pid = getpid();
+        int pid = 0;
 
         // 쓰기 부분
+        pid = getpid();
         close(pipe_from_parent[0]);
-        memset(message, pid, sizeof(char));
-        write(pipe_from_parent[1], message, sizeof(message));
+        write(pipe_from_parent[1], &pid, sizeof(pid));
         close(pipe_from_parent[1]);
 
         // 읽기 부분
         close(pipe_from_child[1]);
-        read(pipe_from_child[0], buf, sizeof(buf));
-        printf(1, "%d: received pong\n", buf[0]);
+        read(pipe_from_child[0], &pid, sizeof(pid));
+        printf(1, "%d: received pong\n", pid);
         close(pipe_from_child[0]);
 
         wait(); // 1. wait으로 해결하는 것이 현명?

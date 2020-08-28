@@ -183,6 +183,7 @@ UPROGS=\
 	_zombie\
 	_greeting\
 	_pingpong\
+	_primes\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
