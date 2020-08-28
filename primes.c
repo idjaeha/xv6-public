@@ -1,10 +1,10 @@
 #include "types.h"
 #include "user.h"
-#define MAX_NUM 3
+#define MAX_NUM 35
 
-// 파이프라인 구현에 대해서 모르겠다! -> pipe의 원리가 뭐지..?
-// 왜 탈출을 못할까요... ㅠㅠ
-// 소수는 왜 제대로 안찍힐까요...
+// 문제점
+// 1. 파이프 라인이 잘 작동하고 있는지 사실 모르겠다.
+// 2. read를 탈출 못한다.
 
 void primes()
 {
@@ -25,27 +25,40 @@ void primes()
 
     else // child
     {
+        int check_array[MAX_NUM + 1] = {0};
+
+        check_array[0] = 1;
+        check_array[1] = 1;
         int prime = 0;
         int number = 0;
-
-        while (prime < MAX_NUM)
+        int index = 0;
+        int no_child = 1;
+        while (number <= MAX_NUM)
         {
-            // 소수 받음
             read(_pipe[0], &prime, sizeof(prime));
             printf(1, "prime %d\n", prime);
-
-            while (number < MAX_NUM && read(_pipe[0], &number, sizeof(number)) != 0)
+            for (index = prime; index <= MAX_NUM; index += prime)
             {
-                if (number % prime != 0) // 소수일시 보낸다.
+                check_array[index] = 1;
+            }
+
+            while (number <= MAX_NUM && read(_pipe[0], &number, sizeof(number)) != 0)
+            {
+                if (number % prime != 0 &&
+                    check_array[number] == 0)
                 {
-                    if (fork() == 0)
+                    if (no_child)
                     {
-                        break;
+                        if (fork() == 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            no_child = 0;
+                        }
                     }
-                    else
-                    {
-                        write(_pipe[1], &number, sizeof(number));
-                    }
+                    write(_pipe[1], &number, sizeof(number));
                 }
             }
         }
