@@ -8,58 +8,61 @@
 
 void primes()
 {
-    int _pipe[2];
-    pipe(_pipe);
+    int current_pipe[2];
+    pipe(current_pipe);
 
     if (fork() != 0) // generate numbers
     {
         int index = 0;
-        close(_pipe[0]);
         for (index = 2; index <= MAX_NUM; index++)
         {
-            write(_pipe[1], &index, sizeof(index));
+            close(current_pipe[0]);
+            write(current_pipe[1], &index, sizeof(index));
         }
-        close(_pipe[1]);
+        close(current_pipe[1]);
         wait();
     }
 
     else // child
     {
-        int check_array[MAX_NUM + 1] = {0};
-
-        check_array[0] = 1;
-        check_array[1] = 1;
         int prime = 0;
         int number = 0;
-        int index = 0;
         int no_child = 1;
+        int new_pipe[2];
 
-        while (number < MAX_NUM)
+        while (number < MAX_NUM && prime < MAX_NUM)
         {
-            read(_pipe[0], &prime, sizeof(prime));
-            printf(1, "prime %d\n", prime);
-            for (index = prime; index <= MAX_NUM; index += prime)
+            // close(current_pipe[1]);
+            if (read(current_pipe[0], &prime, sizeof(prime)) == 0)
             {
-                check_array[index] = 1;
+                break;
             }
+            printf(1, "prime %d\n", prime);
 
-            while (number < MAX_NUM && read(_pipe[0], &number, sizeof(number)) != 0)
+            while (number < MAX_NUM)
             {
-                if (number % prime != 0 &&
-                    check_array[number] == 0)
+                if (read(current_pipe[0], &number, sizeof(number)) == 0)
+                {
+                    break;
+                }
+
+                if (number % prime != 0)
                 {
                     if (no_child) // 자식 프로세스가 없다면 생성한다.
                     {
-                        if (fork() == 0)
+                        pipe(new_pipe);
+                        if (fork() == 0) // child
                         {
+                            current_pipe[0] = new_pipe[0]; // 자식의 읽기 파이프를 새로운 파이프와 연결한다.
                             break;
                         }
-                        else
+                        else // parent
                         {
+                            current_pipe[1] = new_pipe[1]; // 부모의 쓰기 파이프를 새로운 파이프와 연결한다.
                             no_child = 0;
                         }
                     }
-                    write(_pipe[1], &number, sizeof(number));
+                    write(current_pipe[1], &number, sizeof(number)); // 자식 프로세스에게 넘긴다.
                 }
             }
         }
@@ -69,8 +72,8 @@ void primes()
         {
             wait();
         }
-        close(_pipe[0]);
-        close(_pipe[1]);
+        close(current_pipe[0]);
+        close(current_pipe[1]);
         exit();
     }
 }
