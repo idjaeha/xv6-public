@@ -33,7 +33,8 @@ void primes()
         int number = 0;
         int index = 0;
         int no_child = 1;
-        while (number <= MAX_NUM)
+
+        while (number < MAX_NUM)
         {
             read(_pipe[0], &prime, sizeof(prime));
             printf(1, "prime %d\n", prime);
@@ -42,12 +43,12 @@ void primes()
                 check_array[index] = 1;
             }
 
-            while (number <= MAX_NUM && read(_pipe[0], &number, sizeof(number)) != 0)
+            while (number < MAX_NUM && read(_pipe[0], &number, sizeof(number)) != 0)
             {
                 if (number % prime != 0 &&
                     check_array[number] == 0)
                 {
-                    if (no_child)
+                    if (no_child) // 자식 프로세스가 없다면 생성한다.
                     {
                         if (fork() == 0)
                         {
@@ -61,6 +62,12 @@ void primes()
                     write(_pipe[1], &number, sizeof(number));
                 }
             }
+        }
+
+        // 좀비를 안만들기위한 임시방편 대신 꺼지질 않는다 ㅠ
+        if (no_child == 0)
+        {
+            wait();
         }
         close(_pipe[0]);
         close(_pipe[1]);
